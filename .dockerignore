@@ -1,0 +1,41 @@
+# Keep the build context small and prevent host artefacts or secrets from
+# being copied into the image.
+
+# Dependencies and build output — reinstalled/rebuilt inside the image.
+node_modules
+.next
+out
+build
+dist
+coverage
+
+# Version control and CI
+.git
+.github
+.gitignore
+
+# Secrets. Runtime configuration is passed as environment variables instead.
+.env
+.env.*
+!.env.example
+
+# Local tooling and editor state
+.vscode
+.idea
+*.log
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+
+# Docker files themselves are not needed inside the image.
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Tests are not shipped to production.
+tests
+vitest.config.ts
+
+# Documentation
+*.md
+!README.md

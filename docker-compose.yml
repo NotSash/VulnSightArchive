@@ -1,0 +1,108 @@
+# VulnSight — full scanner stack.
+#
+#   docker compose up --build
+#   open http://localhost:3000
+#
+# Brings up the application with every scanner available: Nmap, Nuclei and
+# Chromium are baked into the app image, and OWASP ZAP runs as a sidecar
+# because it is a long-lived Java daemon rather than a CLI tool.
+#
+# Optional API keys go in a `.env` file next to this one (see .env.example).
+# Everything works without them; the report simply records what was skipped.
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Pinned so image rebuilds are reproducible.
+        NUCLEI_VERSION: 3.3.7
+    image: vulnsight:latest
+    container_name: vulnsight-app
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+
+      # Resolved over the compose network, not localhost: ZAP is a separate
+      # container and 127.0.0.1 inside `app` would point at the app itself.
+      ZAP_API_URL: http://zap:8080
+
+      # Optional. Absent keys degrade gracefully into coverage notes.
+      NVD_API_KEY: ${NVD_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
+    depends_on:
+      zap:
+        # `service_started`, not `service_healthy`.
+        #
+        # ZAP is an optional scanner: lib/scanner/zap.ts already degrades to a
+        # coverage note when the daemon is unreachable, and the report says so
+        # honestly. Gating on health meant a slow or failed ZAP start-up
+        # prevented the entire product from booting, which is a far worse
+        # outcome than one scanner being absent from one scan.
+        condition: service_started
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', 'http://127.0.0.1:3000/api/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    # Chromium needs more shared memory than Docker's 64MB default; without
+    # this it crashes on content-heavy pages.
+    shm_size: 1gb
+    security_opt:
+      # Chromium's sandbox requires syscalls Docker's default profile blocks.
+      # The browser only ever loads scan targets, never untrusted local input.
+      - seccomp=unconfined
+
+  zap:
+    # Stable release rather than :latest, so a ZAP update cannot silently
+    # change scan output between runs.
+    image: ghcr.io/zaproxy/zaproxy:stable
+    container_name: vulnsight-zap
+    restart: unless-stopped
+    # Passive scanning only: no spider, no active scan, no attack traffic.
+    # api.disablekey is safe here because the port is not published to the
+    # host — only the app container can reach it over the compose network.
+    # `-silent` suppresses ZAP's calls home, including the add-on update check
+    # that ran on first boot and delayed the API becoming responsive. The image
+    # already ships the add-ons it needs, and a scanner that reaches out to the
+    # internet on start-up is both slow and a hang risk on a locked-down host.
+    command: >
+      zap.sh -daemon
+      -silent
+      -host 0.0.0.0
+      -port 8080
+      -config api.addrs.addr.name=.*
+      -config api.addrs.addr.regex=true
+      -config api.disablekey=true
+      -config start.checkForUpdates=false
+      -config start.checkAddonUpdates=false
+    healthcheck:
+      # The root path, matching the official image's own HEALTHCHECK. The
+      # /JSON/core/view/version/ endpoint answers later than the port opens, so
+      # probing it reported the container unhealthy while ZAP was still coming
+      # up perfectly normally.
+      test:
+        - CMD-SHELL
+        - >-
+          curl -fsS -o /dev/null http://127.0.0.1:8080/ || exit 1
+      interval: 10s
+      timeout: 10s
+      # A cold JVM start plus session database migration takes well over a
+      # minute on a laptop; 120s of start_period plus 20 retries is deliberate
+      # headroom rather than optimism.
+      retries: 20
+      start_period: 120s
+    expose:
+      - '8080'
+
+networks:
+  default:
+    name: vulnsight

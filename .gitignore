@@ -1,0 +1,153 @@
+# VulnSight .gitignore
+#
+# Rule of thumb: if a file is generated, machine-specific, secret, or written
+# for one person rather than for the project, it does not belong in the repo.
+#
+# See https://help.github.com/articles/ignoring-files/
+
+# ---------------------------------------------------------------------------
+# Dependencies
+# ---------------------------------------------------------------------------
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+
+# ---------------------------------------------------------------------------
+# Build output
+# ---------------------------------------------------------------------------
+.next/
+out/
+build/
+dist/
+.turbo/
+.swc/
+*.tsbuildinfo
+next-env.d.ts
+
+# ---------------------------------------------------------------------------
+# Test and coverage output
+# ---------------------------------------------------------------------------
+coverage/
+.nyc_output/
+# Playwright writes traces, screenshots and HTML reports here on failure.
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+playwright/.cache/
+.vitest-cache/
+__snapshots__/*.snap.new
+
+# ---------------------------------------------------------------------------
+# Secrets and environment
+# ---------------------------------------------------------------------------
+# `.env.example` is the documented template and IS committed; nothing else is.
+# VulnSight takes NVD, Gemini and OpenAI keys, so a leaked .env is a real cost,
+# not a theoretical one.
+.env
+.env.*
+# Re-included AFTER the wildcard: order matters in .gitignore, and with the
+# negation placed first Git still ignored the template.
+!.env.example
+!.env.example.*
+*.pem
+*.key
+*.p12
+*.pfx
+secrets.json
+.secrets/
+
+# ---------------------------------------------------------------------------
+# Logs and diagnostics
+# ---------------------------------------------------------------------------
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+pids/
+*.pid
+*.seed
+*.pid.lock
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# ---------------------------------------------------------------------------
+# Editor and OS noise
+# ---------------------------------------------------------------------------
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ---------------------------------------------------------------------------
+# Deploy platform caches
+# ---------------------------------------------------------------------------
+.vercel
+.netlify
+.serverless/
+.wrangler/
+
+# ---------------------------------------------------------------------------
+# Scanner runtime artefacts
+# ---------------------------------------------------------------------------
+# The scan engine shells out to real tools. Their raw output is evidence for a
+# single run, not source: it is large, it names a live host, and it can carry
+# response bodies from someone else's site.
+/tmp-scans/
+scan-output/
+*.nmap
+*.gnmap
+nuclei-templates/
+zap-session/
+*.har
+screenshots/
+!public/screenshots/
+
+# Generated reports. A PDF or JSON export is the product of a scan, and it
+# quotes a real target, so it must never be committed by accident.
+reports/
+*-report.pdf
+*-report.json
+
+# ---------------------------------------------------------------------------
+# Private working notes
+# ---------------------------------------------------------------------------
+# `_for-myself/` is a personal engineering journal: KNOWLEDGE.md (the working
+# context file), layout reasoning, and hero-art source experiments. Written for
+# one reader, so it is not published.
+#
+# The EXCEPTION is `_for-myself/tools/`. Those are real quality gates
+# (`gate.sh`, `mobile-audit.mjs`, `state-audit.mjs`, `shot.mjs`) and
+# `tests/mobile-journey.test.ts` reads `mobile-audit.mjs` from disk, so a clone
+# without them fails CI. They stay tracked until Phase 1 moves them to a
+# conventional top-level `tools/`.
+_for-myself/*
+!_for-myself/tools/
+_for-myself/tools/*.png
+_for-myself/tools/*.jpg
+
+# Scratch space
+scratch/
+tmp/
+*.local
+*.bak
+*.orig
+*.rej

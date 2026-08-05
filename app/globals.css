@@ -1,0 +1,1475 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import './vendor/shadcn-tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* ---------------------------------------------------------------------------
+   VulnSight is a security console rendered as a CRT workstation, at night.
+   The page is a dark room; the monitor is the light source.
+
+   The governing rule: chroma appears for exactly two reasons — risk severity,
+   or agreement between scanners. Nothing else is coloured. That is why a
+   severity chip and a phosphor-green "confirmed" badge carry weight; they are
+   the only colour on the page.
+--------------------------------------------------------------------------- */
+
+@theme inline {
+  --font-heading: var(--font-display), monospace;
+  --font-display: var(--font-display), monospace;
+  --font-sans: var(--font-sans), system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+
+  /* Functional severity scale — one of the two licensed uses of colour. */
+  --color-severity-critical: var(--severity-critical);
+  --color-severity-high: var(--severity-high);
+  --color-severity-medium: var(--severity-medium);
+  --color-severity-low: var(--severity-low);
+  --color-severity-info: var(--severity-info);
+
+  /* Phosphor green — the other licensed use: scanners agreeing. */
+  --color-phos: var(--phos);
+  --color-amber: var(--amber);
+
+  /* The CRT's warm bezel. Scarce by design: the only warm surface. */
+  --color-bone: var(--bone);
+  --color-bone-2: var(--bone-2);
+  --color-bone-dk: var(--bone-dk);
+  --color-bone-edge: var(--bone-edge);
+  --color-screen: var(--screen);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+/*
+  Dark-only by design. A light mode would require an entirely different palette
+  and would destroy the "lit console in a dark room" concept, so tokens are
+  defined once with no theme switching and no flash.
+*/
+:root,
+.dark {
+  color-scheme: dark;
+
+  --background: #070c12;
+  --foreground: #eaf2f7;
+
+  /* Panels are translucent so the animated field shows faintly through them.
+     They must read as lifted off the page, never as opaque boxes pasted on. */
+  --card: rgb(190 225 245 / 4.2%);
+  --card-foreground: #eaf2f7;
+
+  --popover: #0b131b;
+  --popover-foreground: #eaf2f7;
+
+  --primary: #67e8b0;
+  --primary-foreground: #03070b;
+
+  --secondary: rgb(190 225 245 / 7.5%);
+  --secondary-foreground: #eaf2f7;
+
+  --muted: rgb(190 225 245 / 7.5%);
+  --muted-foreground: #93aab9;
+
+  --accent: rgb(190 225 245 / 7.5%);
+  --accent-foreground: #eaf2f7;
+
+  --destructive: #ff6154;
+
+  --border: rgb(160 205 235 / 13%);
+  --input: rgb(160 205 235 / 24%);
+  --ring: #67e8b0;
+
+  /* -------------------------------------------------------------------------
+     Motion.
+
+     One curve and one duration scale, so the page reads as a single system
+     rather than a collection of components that each invented their own.
+
+     Before this there were six easings in use, three of which were
+     near-identical expo-outs differing in the third decimal: a difference
+     nobody can perceive but which guaranteed nothing quite matched.
+
+     `--ease` is a strong expo-out. Motion should leave quickly and arrive
+     gently, because the arrival is the part the eye actually reads. The
+     softer `--ease-soft` is for things that move *while* you watch them
+     rather than on entry, where a hard decelerate looks like a stumble.
+
+     Durations follow a 3-step scale. Anything longer is a deliberate
+     exception and stays inline with a comment saying why.
+     ------------------------------------------------------------------------- */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
+
+  /* Colour, border and opacity changes under the pointer. */
+  --dur-fast: 160ms;
+  /* Things entering or leaving: sheets, reveals, rows. */
+  --dur-base: 340ms;
+  /* Deliberate, watched motion: the score fill, the plot draw. */
+  --dur-slow: 620ms;
+
+  /* The two deliberately long ones: watched motion that is telling a story.
+     Named rather than inline so they are visible next to the scale. */
+  --dur-score: 1150ms;
+  --dur-draw: 1600ms;
+
+  /* Stagger step between siblings in a group. Four items is 120ms total,
+     which reads as a sequence without anyone waiting for it. */
+  --stagger: 40ms;
+
+  /* -------------------------------------------------------------------------
+     Typography rhythm.
+
+     Three decisions, made once, so the page has a measure and a beat rather
+     than a hundred local judgements.
+
+     **Measure.** The readable range is 45 to 75 characters. Seven different
+     `max-w-[Nem]` values were in use, including 52em, which is far past that.
+
+     36em rather than the 44em first tried: `em` is relative to font size, not
+     to character width, and Inter at 15.5px averages 7.8px per character, so
+     44em measured **87 characters per line** in the browser. 36em lands at
+     roughly 71, just inside the ceiling. Measured, not assumed.
+
+     **Leading.** Six ways of saying 1.6-ish were in use (1.6, 1.62, 1.65,
+     1.68, 1.7 and `leading-relaxed`), differing by amounts no reader can
+     perceive. One value for prose, one tighter one for headings.
+
+     **Section rhythm.** The five home sections used py-20, py-24, pb-20,
+     py-20 and pb-24/pt-2, several of them tuned by eye against whatever
+     happened to precede them. One token means reordering the page cannot
+     break its rhythm.
+     ------------------------------------------------------------------------- */
+  --measure: 36em;
+  --measure-tight: 28em;
+
+  --leading-prose: 1.65;
+  --leading-heading: 1.15;
+
+  /* The gap above and below a top-level page section. */
+  --section-y: 5.5rem;
+
+  /* Named greys, used directly where a token is clearer than an opacity. */
+  --dim: #93aab9;
+  /*
+   * `--dim-2` used to be `#607686`, which measured 4.14:1 on the page ground
+   * and 4.01:1 on a raised panel. Almost every use is 9.5px to 12px mono
+   * label text, so WCAG asks for 4.5:1 and it was failing everywhere: 46
+   * pieces of text on home and 63 on a report.
+   *
+   * Raised twice. `#6d8797` cleared the page ground and a single panel, but
+   * the report stacks two translucent panels (a card inside a card), where it
+   * fell back to 4.47:1. `#75919f` is the same hue and clears every ground
+   * the site actually paints: 5.89:1 on the page, 5.52:1 on one panel,
+   * 5.07:1 on two. Still clearly secondary against `--dim` at 8.12:1.
+   */
+  --dim-2: #75919f;
+  --ink: #03070b;
+
+  --phos: #67e8b0;
+  --amber: #ffb454;
+
+  --bone: #f0e4d2;
+  --bone-2: #dccdb4;
+  --bone-dk: #b9a588;
+  --bone-edge: #8e7c63;
+  --screen: #080f16;
+
+  /* Severity palette */
+  --severity-critical: #ff6154;
+  --severity-high: #ff9147;
+  --severity-medium: #f2c14e;
+  --severity-low: #7fb6ea;
+  /* Info is the neutral grey of the severity scale; lifted to the same
+     `#6d8797` as `--dim-2` so the badge text clears 4.5:1. */
+  --severity-info: #75919f;
+  /*
+   * Info is the one severity whose chip puts the colour on itself: the label
+   * is `--severity-info` on a 12% wash of `--severity-info`, which measured
+   * 4.01:1. The other four severities are warm and bright enough to clear it.
+   * A lighter ink for that one chip keeps the grey identity and the contrast.
+   */
+  --severity-info-ink: #9ab2bf;
+
+  /* Chart palette mirrors severity so graphs stay legible. */
+  --chart-1: #ff6154;
+  --chart-2: #ff9147;
+  --chart-3: #f2c14e;
+  --chart-4: #7fb6ea;
+  --chart-5: #75919f;
+
+  --radius: 0.25rem;
+
+  --sidebar: #0a121a;
+  --sidebar-foreground: #eaf2f7;
+  --sidebar-primary: #67e8b0;
+  --sidebar-primary-foreground: #03070b;
+  --sidebar-accent: rgb(190 225 245 / 7.5%);
+  --sidebar-accent-foreground: #eaf2f7;
+  --sidebar-border: rgb(160 205 235 / 13%);
+  --sidebar-ring: #67e8b0;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+  ::selection {
+    background: var(--phos);
+    color: var(--ink);
+  }
+
+  /*
+    The display face ships a single weight. Asking for a heavier one makes the
+    browser synthesise a fake bold, which smears a pixel font into mush, so
+    every heading is pinned to 400.
+  */
+  .font-display,
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display), monospace;
+    font-weight: 400;
+  }
+
+  /* Numbers that change at runtime must not shift the layout. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer utilities {
+  /* Hard offset shadow — the tactile, physical quality borrowed from the
+     console world. A dark shadow on a dark field reads as depth. */
+  .shadow-hard {
+    box-shadow: 4px 4px 0 rgb(3 7 11 / 85%);
+  }
+  .shadow-hard-sm {
+    box-shadow: 3px 3px 0 rgb(3 7 11 / 85%);
+  }
+  /*
+     Pressed state for buttons: the key goes down and its shadow collapses.
+
+     `.press` now carries the shadow itself rather than assuming the element
+     already has one. It did not: **only 2 of 27 uses also had `shadow-hard`**,
+     so on the other 25 the button slid 3px down and to the right with nothing
+     underneath it, which reads as falling off its position rather than being
+     pressed. The travel and the shadow are one gesture and have to ship
+     together.
+
+     `box-shadow` is not in the transition, deliberately. A key going down is
+     instant; easing it makes the button feel spongy rather than mechanical,
+     and this whole interface is meant to feel like hardware.
+  */
+  .press {
+    box-shadow: 3px 3px 0 rgb(3 7 11 / 85%);
+    transition: transform var(--dur-fast) var(--ease);
+  }
+
+  .press:active {
+    transform: translate(3px, 3px);
+    box-shadow: 0 0 0 rgb(0 0 0 / 0%);
+  }
+
+  /*
+     Anything already carrying the larger offset keeps it; the two are the same
+     gesture at two scales, and overriding would flatten a deliberate choice.
+  */
+  .press.shadow-hard {
+    box-shadow: 4px 4px 0 rgb(3 7 11 / 85%);
+  }
+
+  /*
+     Two classes beat one: `.press.shadow-hard` outranks `.press:active`, so
+     without this the larger buttons travelled but kept their shadow, which is
+     the opposite of a key going down. Measured: `active sh=4px 4px` when it
+     should have been none.
+  */
+  .press.shadow-hard:active {
+    box-shadow: 0 0 0 rgb(0 0 0 / 0%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .press {
+      transition: none;
+    }
+  }
+
+  /*
+     A depress, for something you are choosing between rather than firing.
+
+     Three depth options sit side by side, and three hard offset shadows in a
+     row reads as clutter, so these scale down very slightly instead. Written
+     here rather than as `active:scale-[0.985]`, because that arbitrary value
+     with a variant emitted nothing at all: measured `transform: none` while
+     held down.
+  */
+  .press-soft {
+    transition: transform var(--dur-fast) var(--ease);
+  }
+
+  .press-soft:active {
+    transform: scale(0.985);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .press-soft {
+      transition: none;
+    }
+    .press-soft:active {
+      transform: none;
+    }
+  }
+
+  /* Scanlines over anything meant to read as a lit screen. */
+  .scanlines::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      180deg,
+      rgb(0 0 0 / 26%) 0 1px,
+      transparent 1px 3px
+    );
+  }
+
+  /* Section separator that fades at both ends, so sections are divided by
+     space and light rather than by a hard band of a different colour. */
+  .rule-fade {
+    height: 1px;
+    border: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--border) 18%,
+      var(--border) 82%,
+      transparent
+    );
+  }
+
+  .animate-pulse-trace {
+    animation: pulse-trace 1.4s linear infinite;
+  }
+
+  /*
+     Entrance animations, opted out of rather than shortened.
+
+     `motion-safe:` is not emitted in this Tailwind setup, so the guard is
+     written here instead: the animation is declared unconditionally and then
+     removed under `prefers-reduced-motion`. That order matters. Declaring it
+     only inside `no-preference` would mean any browser that reports neither
+     value gets nothing, and the element is visible either way, so the worst
+     case is a missing flourish rather than missing content.
+  */
+  /*
+     Prose. One measure, one leading, applied together.
+
+     Kept as a utility rather than a bare `p` rule because plenty of paragraphs
+     on this site are not prose: table cells, chip labels and the mono readouts
+     all want their own line length and would be wrecked by a 44em cap.
+  */
+  .prose-measure {
+    max-width: var(--measure);
+    line-height: var(--leading-prose);
+  }
+
+  .prose-measure-tight {
+    max-width: var(--measure-tight);
+    line-height: var(--leading-prose);
+  }
+
+  /*
+     The gap that separates one top-level section from the next.
+
+     Applied to the section itself rather than to a wrapper, so the rhythm
+     survives reordering. Sections previously carried their own padding tuned
+     against whatever preceded them, which meant `Evidence` and `Closing` had
+     no top padding at all and only looked right in one arrangement.
+  */
+  .section-y {
+    padding-top: var(--section-y);
+    padding-bottom: var(--section-y);
+  }
+
+  /*
+     For a section that continues the one above it rather than starting a new
+     idea: Evidence follows Pipeline, and Closing follows Methodology. A full
+     gap on both sides would read as four separate topics instead of two.
+
+     A modifier rather than a Tailwind `pt-0`, because both are single-class
+     utilities and the cascade order between them is not something to rely on.
+  */
+  .section-y-continued {
+    padding-top: 0;
+  }
+
+  .animate-rise {
+    animation: rise var(--dur-base) var(--ease) both;
+  }
+
+  /*
+     Stagger by position, rather than by hand.
+
+     The old `.animate-rise-1/-2/-3` classes carried baked-in 40/80/120ms
+     delays and were used **zero times** anywhere: the stagger was built and
+     never wired up. Reading the index from a custom property means a parent
+     can stagger any number of children without new classes, and a list that
+     grows does not silently stop staggering at item four.
+  */
+  .animate-rise-in {
+    animation: rise var(--dur-base) var(--ease) calc(var(--i, 0) * var(--stagger)) both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise,
+  .animate-rise-in {
+    animation: none;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* The coincidence plot draws itself, then the agreement gates ignite — so you
+   watch the instrument reach its conclusion rather than being handed it. */
+@keyframes plot-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes plot-ignite {
+  to {
+    opacity: 1;
+  }
+}
+
+/* The score gauge draws to its value. The target is passed in as a custom
+   property so the keyframe stays generic. */
+@keyframes score-fill {
+  to {
+    stroke-dashoffset: var(--score-offset);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   The scan field.
+
+   Three states, because this is where every scan begins and a control that
+   looks identical whether or not you are using it gives no feedback:
+
+     resting  a plain hairline border
+     hover    a soft phosphor glow, so it reads as reachable
+     typing   a light travels around the perimeter, so the field looks live
+
+   The travelling light is a conic-gradient rotated behind the field. The inner
+   surface is inset by 1px, so only a 1px ring of the gradient shows and the
+   bright arc reads as a light running around the edge.
+
+   Rotating a gradient needs the angle registered with @property: an unregistered
+   custom property animates in discrete steps rather than interpolating. Where
+   @property is unsupported the ring simply does not rotate, leaving a static
+   phosphor border, which still looks correct.
+--------------------------------------------------------------------------- */
+@property --scan-spin {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes scan-spin {
+  to {
+    --scan-spin: 360deg;
+  }
+}
+
+.scan-field {
+  position: relative;
+  isolation: isolate;
+  transition: box-shadow 0.28s ease;
+}
+
+/* The border layer. Sits behind the content and is masked to a 1px ring. */
+.scan-field::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--input);
+  transition: background 0.28s ease;
+}
+
+.scan-field:hover:not(:focus-within) {
+  box-shadow:
+    4px 4px 0 rgb(3 7 11 / 85%),
+    0 0 0 1px rgb(103 232 176 / 75%),
+    0 0 26px -2px rgb(103 232 176 / 55%);
+}
+
+/* Lift the border itself, not just the halo, so hover is unmistakable. */
+.scan-field:hover:not(:focus-within)::before {
+  background: rgb(103 232 176 / 70%);
+}
+
+/* Typing: the light runs, and the glow tightens up. */
+.scan-field:focus-within {
+  box-shadow:
+    4px 4px 0 rgb(3 7 11 / 85%),
+    0 0 22px -6px rgb(103 232 176 / 45%);
+}
+
+.scan-field:focus-within::before {
+  /*
+   * conic-gradient angle 0 is at twelve o'clock, so the light starts at the top
+   * centre and travels round. The long transparent run keeps a single bright
+   * arc rather than a repeating pattern.
+   */
+  background: conic-gradient(
+    from var(--scan-spin) at 50% 50%,
+    transparent 0deg,
+    transparent 250deg,
+    rgb(103 232 176 / 55%) 300deg,
+    var(--phos) 340deg,
+    rgb(103 232 176 / 55%) 20deg,
+    transparent 70deg,
+    transparent 360deg
+  );
+  animation: scan-spin 2.4s linear infinite;
+}
+
+/* Motion here is decoration; the glow alone still communicates focus. */
+@media (prefers-reduced-motion: reduce) {
+  .scan-field:focus-within::before {
+    animation: none;
+    background: var(--phos);
+  }
+}
+
+
+/* ---------------------------------------------------------------------------
+   A submit button that cannot act yet.
+
+   Three states, not one. The old single grey treatment made the very first
+   control on the page look broken, and it made two completely different
+   situations look identical: "I am waiting for you to type" and "you typed,
+   now tick the box". Nothing is wrong in either case, so grey was a lie.
+
+   Colour now points at whatever is blocking you:
+
+     .btn-waiting    green, the page's own accent, breathing slowly. Powered
+                     and expectant. Used when the address is still empty.
+     .btn-needs-auth amber, the exact colour of the authorisation box, so the
+                     eye is sent to the one thing left to do.
+     .btn-blocked    the neutral hatch, now only for work in flight, where a
+                     dead surface is honest: the button really can do nothing.
+
+   None of them are `disabled`, so every press still does something.
+--------------------------------------------------------------------------- */
+.btn-waiting,
+.btn-needs-auth {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.btn-waiting {
+  color: var(--phos);
+  background-color: rgb(103 232 176 / 9%);
+  box-shadow: inset 0 0 0 1px rgb(103 232 176 / 38%);
+  animation: btn-breathe 3.4s ease-in-out infinite;
+}
+
+.btn-waiting:hover {
+  background-color: rgb(103 232 176 / 15%);
+}
+
+/* A slow pulse reads as "powered and idle". Fast would read as an alarm. */
+@keyframes btn-breathe {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 0 0 1px rgb(103 232 176 / 30%),
+      0 0 0 0 rgb(103 232 176 / 0%);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 1px rgb(103 232 176 / 52%),
+      0 0 10px -2px rgb(103 232 176 / 26%);
+  }
+}
+
+.btn-needs-auth {
+  color: var(--amber);
+  background-color: rgb(255 180 84 / 11%);
+  box-shadow: inset 0 0 0 1px rgb(255 180 84 / 42%);
+}
+
+.btn-needs-auth:hover {
+  background-color: rgb(255 180 84 / 17%);
+}
+
+.btn-waiting:active,
+.btn-needs-auth:active {
+  transform: translateY(1px);
+}
+
+/* The breath is decoration; the border and colour still carry the state. */
+@media (prefers-reduced-motion: reduce) {
+  .btn-waiting {
+    animation: none;
+    box-shadow: inset 0 0 0 1px rgb(103 232 176 / 42%);
+  }
+}
+
+.btn-blocked {
+  position: relative;
+  overflow: hidden;
+  color: var(--dim);
+  background-color: rgb(190 225 245 / 6%);
+  box-shadow: inset 0 0 0 1px rgb(160 205 235 / 22%);
+  cursor: not-allowed;
+}
+
+.btn-blocked::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgb(160 205 235 / 7%) 0 6px,
+    transparent 6px 12px
+  );
+  animation: hatch-drift 900ms linear infinite;
+}
+
+@keyframes hatch-drift {
+  to {
+    transform: translateX(-17px);
+  }
+}
+
+/* A blocked press bumps the button, so the click is acknowledged. */
+.btn-blocked:active {
+  transform: translateY(1px);
+}
+
+/* ---------------------------------------------------------------------------
+   The authorisation box, when it is the thing standing in the way.
+--------------------------------------------------------------------------- */
+@keyframes auth-nudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-5px);
+  }
+  40% {
+    transform: translateX(5px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
+
+.auth-nudge {
+  animation: auth-nudge 460ms ease-in-out;
+  box-shadow:
+    0 0 0 1px var(--amber),
+    0 0 26px -4px rgb(255 180 84 / 60%);
+}
+
+
+/* ---------------------------------------------------------------------------
+   Cursor.
+
+   A pixel-art magnifying glass, because inspection is literally what this
+   product does, and the blocky rendering matches the rest of the brand.
+
+   Two things it must survive, learned the hard way:
+
+   1. **It cannot be a single colour.** A phosphor-only reticle disappeared
+      against the dark page. Every glyph here has a near-black outline and a
+      light body, so it stays legible on the night background, on the phosphor
+      buttons, and on the bone CRT bezel alike.
+   2. **The hotspot is the lens centre** (12,12), not the top-left corner, so
+      what you click is what sits under the glass. The art is an 18x18 pixel
+      grid drawn at 36x36 CSS pixels (2x), so every pixel stays square and the
+      glyph reads at a glance: round rim, dark glass, glare streak, thick
+      diagonal handle.
+
+   Delivered as an inline data URI: no extra request, no flash of the system
+   arrow. `crosshair` and `pointer` are the fallbacks if a custom cursor is
+   refused.
+--------------------------------------------------------------------------- */
+body {
+  cursor:
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2016%2016%22%20shape-rendering%3D%22crispEdges%22%3E%3Crect%20x%3D%223%22%20y%3D%221%22%20width%3D%227%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%222%22%20y%3D%222%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%224%22%20y%3D%222%22%20width%3D%225%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%229%22%20y%3D%222%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%221%22%20y%3D%223%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%223%22%20y%3D%223%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%223%22%20width%3D%223%22%20height%3D%221%22%20fill%3D%22%230B1117%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%223%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%223%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%221%22%20y%3D%224%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%222%22%20y%3D%224%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%230B1117%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%224%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%227%22%20y%3D%224%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%230B1117%22%2F%3E%3Crect%20x%3D%229%22%20y%3D%224%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%2211%22%20y%3D%224%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%221%22%20y%3D%225%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%222%22%20y%3D%225%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%223%22%20y%3D%225%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%230B1117%22%2F%3E%3Crect%20x%3D%224%22%20y%3D%225%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%225%22%20width%3D%225%22%20height%3D%221%22%20fill%3D%22%230B1117%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%225%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%2211%22%20y%3D%225%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%221%22%20y%3D%226%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%222%22%20y%3D%226%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%223%22%20y%3D%226%22%20width%3D%227%22%20height%3D%221%22%20fill%3D%22%230B1117%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%226%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%2211%22%20y%3D%226%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%221%22%20y%3D%227%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%222%22%20y%3D%227%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%223%22%20y%3D%227%22%20width%3D%227%22%20height%3D%221%22%20fill%3D%22%230B1117%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%227%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%2211%22%20y%3D%227%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%221%22%20y%3D%228%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%222%22%20y%3D%228%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%224%22%20y%3D%228%22%20width%3D%225%22%20height%3D%221%22%20fill%3D%22%230B1117%22%2F%3E%3Crect%20x%3D%229%22%20y%3D%228%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%2211%22%20y%3D%228%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%221%22%20y%3D%229%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%223%22%20y%3D%229%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%229%22%20width%3D%223%22%20height%3D%221%22%20fill%3D%22%230B1117%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%229%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%229%22%20width%3D%223%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%222%22%20y%3D%2210%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%224%22%20y%3D%2210%22%20width%3D%225%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%229%22%20y%3D%2210%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%2211%22%20y%3D%2210%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%2212%22%20y%3D%2210%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%223%22%20y%3D%2211%22%20width%3D%227%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%2211%22%20width%3D%223%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%2213%22%20y%3D%2211%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%229%22%20y%3D%2212%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%2211%22%20y%3D%2212%22%20width%3D%223%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%2214%22%20y%3D%2212%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%2213%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%2212%22%20y%3D%2213%22%20width%3D%223%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%2215%22%20y%3D%2213%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%2211%22%20y%3D%2214%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%2213%22%20y%3D%2214%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%23EAF2F7%22%2F%3E%3Crect%20x%3D%2215%22%20y%3D%2214%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%2212%22%20y%3D%2215%22%20width%3D%224%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3C%2Fsvg%3E") 12 12,
+    crosshair;
+}
+
+a,
+button,
+label,
+summary,
+[role='button'],
+input[type='checkbox'],
+select {
+  cursor:
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2016%2016%22%20shape-rendering%3D%22crispEdges%22%3E%3Crect%20x%3D%223%22%20y%3D%221%22%20width%3D%227%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%222%22%20y%3D%222%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%224%22%20y%3D%222%22%20width%3D%225%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%229%22%20y%3D%222%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%221%22%20y%3D%223%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%223%22%20y%3D%223%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%223%22%20width%3D%223%22%20height%3D%221%22%20fill%3D%22%230B1117%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%223%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%223%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%221%22%20y%3D%224%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%222%22%20y%3D%224%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%224%22%20y%3D%224%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%230B1117%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%224%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%227%22%20y%3D%224%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%230B1117%22%2F%3E%3Crect%20x%3D%229%22%20y%3D%224%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%2211%22%20y%3D%224%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%221%22%20y%3D%225%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%222%22%20y%3D%225%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%223%22%20y%3D%225%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%230B1117%22%2F%3E%3Crect%20x%3D%224%22%20y%3D%225%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%225%22%20width%3D%225%22%20height%3D%221%22%20fill%3D%22%230B1117%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%225%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%2211%22%20y%3D%225%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%221%22%20y%3D%226%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%222%22%20y%3D%226%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%223%22%20y%3D%226%22%20width%3D%227%22%20height%3D%221%22%20fill%3D%22%230B1117%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%226%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%2211%22%20y%3D%226%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%221%22%20y%3D%227%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%222%22%20y%3D%227%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%223%22%20y%3D%227%22%20width%3D%227%22%20height%3D%221%22%20fill%3D%22%230B1117%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%227%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%2211%22%20y%3D%227%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%221%22%20y%3D%228%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%222%22%20y%3D%228%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%224%22%20y%3D%228%22%20width%3D%225%22%20height%3D%221%22%20fill%3D%22%230B1117%22%2F%3E%3Crect%20x%3D%229%22%20y%3D%228%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%2211%22%20y%3D%228%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%221%22%20y%3D%229%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%223%22%20y%3D%229%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%229%22%20width%3D%223%22%20height%3D%221%22%20fill%3D%22%230B1117%22%2F%3E%3Crect%20x%3D%228%22%20y%3D%229%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%229%22%20width%3D%223%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%222%22%20y%3D%2210%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%224%22%20y%3D%2210%22%20width%3D%225%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%229%22%20y%3D%2210%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%2211%22%20y%3D%2210%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%2212%22%20y%3D%2210%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%223%22%20y%3D%2211%22%20width%3D%227%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%2211%22%20width%3D%223%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%2213%22%20y%3D%2211%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%229%22%20y%3D%2212%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%2211%22%20y%3D%2212%22%20width%3D%223%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%2214%22%20y%3D%2212%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%2213%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%2212%22%20y%3D%2213%22%20width%3D%223%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%2215%22%20y%3D%2213%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%2211%22%20y%3D%2214%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%2213%22%20y%3D%2214%22%20width%3D%222%22%20height%3D%221%22%20fill%3D%22%2367E8B0%22%2F%3E%3Crect%20x%3D%2215%22%20y%3D%2214%22%20width%3D%221%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3Crect%20x%3D%2212%22%20y%3D%2215%22%20width%3D%224%22%20height%3D%221%22%20fill%3D%22%2303070B%22%2F%3E%3C%2Fsvg%3E") 12 12,
+    pointer;
+}
+
+/* Text fields keep the I-beam: a magnifier over an input would hide the caret,
+   and seeing exactly where you are typing matters more than the flourish. */
+input[type='text'],
+input[type='url'],
+input[type='email'],
+input[type='search'],
+textarea {
+  cursor: text;
+}
+
+button:disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
+/*
+  Except the two waiting states, which really are pressable.
+
+  They carry `aria-disabled` so assistive tech knows the scan cannot start
+  yet, but pressing them resolves the blocker: one focuses the address field,
+  the other scrolls to the authorisation box and flashes it. A `not-allowed`
+  cursor on a control that does something is a lie, and it is the specific lie
+  that made the first control on the page read as dead.
+*/
+.btn-waiting[aria-disabled='true'],
+.btn-needs-auth[aria-disabled='true'] {
+  cursor: pointer;
+}
+
+/*
+  Brand mark pulse.
+
+  Adapted from Uiverse `chilly-swan-51` by milley69: a short bright dash is
+  swept along the waveform so a pulse appears to travel through it. The offsets
+  come from the measured path length (28.497 units) plus the 9-unit pulse, so
+  the dash starts and finishes completely clear of the line.
+
+  The fade near the end is the original's trick for hiding the loop restart.
+*/
+@keyframes pulse-trace {
+  0% {
+    stroke-dashoffset: 9;
+    opacity: 1;
+  }
+  72.5% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -28.497;
+    opacity: 0;
+  }
+}
+
+/* An indeterminate sweep, used where the real progress genuinely is unknown.
+   Never used to imply a precise figure the backend does not have. */
+@keyframes indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+/*
+  Honor reduced-motion everywhere. Motion here is purely communicative, so it
+  is always safe to neutralise. Covers third-party animations too.
+*/
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Print stylesheet for the browser's native Print action. The real PDF is
+   generated server-side by app/api/report/[scanId]/pdf.
+--------------------------------------------------------------------------- */
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm 14mm;
+  }
+
+  :root,
+  .dark {
+    --background: #fff;
+    --foreground: #16181d;
+    --card: #fff;
+    --card-foreground: #16181d;
+    --muted: #f4f5f7;
+    --muted-foreground: #5b6773;
+    --border: #d8dce1;
+
+    /*
+     * The dim greys are tuned for a near-black ground and were not overridden
+     * here, so body copy printed at `rgb(147,170,185)` on white: **2.42:1**
+     * measured with the WCAG formula, against a 4.5 minimum. On a laser
+     * printer that is close to unreadable.
+     *
+     * These land at 7.0 and 4.8 respectively, so secondary copy stays
+     * secondary without becoming a smudge.
+     */
+    --dim: #414b56;
+    --dim-2: #5b6773;
+
+    /*
+     * Phosphor green exists to glow on black. On paper `rgb(103,232,176)` is a
+     * pale mint that all but vanishes, and here it is load-bearing: it marks
+     * scanner agreement, so losing it loses information rather than
+     * decoration. A dark green keeps the meaning and the association.
+     */
+    --phos: #0f7a52;
+    --amber: #8a5a00;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #16181d !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Drop the animated field and any decorative surface. */
+  canvas,
+  .scanlines::after,
+  [data-decorative='true'] {
+    display: none !important;
+  }
+
+  .print\:hidden,
+  nav[aria-label='Report sections'],
+  [data-print='hide'] {
+    display: none !important;
+  }
+
+  main,
+  .mx-auto {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  section,
+  article,
+  [data-report-card] {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .shadow-hard,
+  .shadow-hard-sm,
+  [class*='backdrop-blur'],
+  [class*='bg-card'] {
+    background: #fff !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+  }
+
+  /*
+   * Panel headers printed as solid dark bands.
+   *
+   * `PanelHeader` carries `bg-[#03070B]/55`, which none of the resets above
+   * match, so "HOW THE SCORE WAS REACHED" and "THE TARGET" came out as grey
+   * bars with pale text on them: unreadable, and a strip of toner on every
+   * panel. On paper a header does not need a filled ground to read as a
+   * header; a rule under it is enough.
+   */
+  [data-slot='panel-header'],
+  [class*='bg-[#03070B]'] {
+    background: #fff !important;
+    color: #16181d !important;
+    border-bottom: 1px solid #d8dce1 !important;
+  }
+
+  /*
+   * Anything still painting the accent as a background needs a legible
+   * foreground: the print palette darkens `--phos`, but a dark green fill with
+   * near-black text on it is worse than either.
+   */
+  .bg-phos,
+  [class*='bg-phos'] {
+    background: #e8f5ef !important;
+    color: #0f5138 !important;
+  }
+
+  a {
+    color: #1d4ed8 !important;
+    text-decoration: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Hero scroll cue.
+
+   Three stacked chevrons whose opacity travels downward, so the eye is led
+   toward the fold rather than merely pointed at it. The paths already carry
+   static opacities; this animates a gentle drift on top so the cue reads as
+   alive without demanding attention.
+--------------------------------------------------------------------------- */
+.scroll-cue {
+  animation: scroll-cue-drift 2.4s ease-in-out infinite;
+}
+
+@keyframes scroll-cue-drift {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translateY(4px);
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Hero screen, print.
+
+   The canvas is already hidden by the rule above, but the section still
+   reserves a full viewport of height, so printing the home page produced a
+   blank first sheet before any content. Collapse it to just the wordmark.
+--------------------------------------------------------------------------- */
+@media print {
+  [data-hero-screen] {
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+  }
+  [data-hero-screen] [data-hero-chrome] {
+    display: none !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Client-only regions.
+
+   The `js` class is added to <html> by an inline script in <head>, before
+   first paint. Anything marked `js-only` is therefore hidden whenever scripts
+   are off, and visible the instant they are on, with no flash either way.
+
+   The rule is written as "hide unless js", never "hide by default and reveal
+   with JavaScript". That inversion is what made the coincidence plot
+   permanently invisible in Part 1, and the failure mode is silent.
+
+   Used by the results page, which assembles its report in the browser: with
+   scripts off the loading skeleton would otherwise sit there forever while a
+   <noscript> block explained the situation directly beneath it.
+--------------------------------------------------------------------------- */
+html:not(.js) .js-only {
+  display: none;
+}
+
+/* ---------------------------------------------------------------------------
+   The mobile type floor.
+
+   The audit found 10 distinct text sizes below 12px on every page: 9.5px is
+   the most common by far (36 uses), then 11px (30), 10px (22), 10.5px (12).
+   All of them are legible on a desktop monitor at arm's length and none of
+   them are on a phone held at 30cm.
+
+   106 call sites is far too many to patch by hand, and doing so would also be
+   the wrong shape of fix: this is one decision about the smallest readable
+   size on a touch device, not a hundred independent ones. So the floor is
+   applied once, here, by lifting the four smallest steps of the existing ramp
+   on coarse pointers only. Desktop keeps every size exactly as authored.
+
+   The steps are lifted proportionally rather than all flattened to 12px, so
+   the hierarchy survives: a 9.5px eyebrow above an 11px label is still smaller
+   than it, just both readable. Flattening would erase the distinction the
+   sizes were chosen to make.
+
+   12px is the floor, not a target: the smallest step lands exactly on it and
+   the rest are spaced above. An earlier pass put the floor at 11.5px, which
+   was still under the threshold and simply moved the problem half a pixel.
+
+   `@media (pointer: coarse)` rather than a width breakpoint, because this is
+   about how far the screen is from the eye and how precise the input is, not
+   about how many pixels wide it happens to be. A 768px tablet needs this; a
+   768px browser window on a desktop does not.
+--------------------------------------------------------------------------- */
+@media (pointer: coarse) {
+  /* Consumed by SVG labels, which carry their size as a style rather than a
+     class and so cannot be reached by the rules below. */
+  :root {
+    --plot-label: 12px;
+    --plot-label-sm: 12px;
+  }
+
+  .text-\[9\.5px\] {
+    font-size: 12px;
+  }
+  .text-\[10px\] {
+    font-size: 12.5px;
+  }
+  .text-\[10\.5px\] {
+    font-size: 13px;
+  }
+  .text-\[11px\] {
+    font-size: 13.5px;
+  }
+  .text-\[11\.5px\] {
+    font-size: 13.5px;
+  }
+
+  /*
+   * The two smallest steps in the ramp. Rare, and only used for labels that
+   * sit directly beside the thing they name, but 9px on a phone is not text
+   * so much as texture.
+   */
+  .text-\[8\.5px\] {
+    font-size: 12px;
+  }
+  .text-\[9px\] {
+    font-size: 12px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   A comfortable touch target on something that must stay small.
+
+   Most controls can simply be made bigger. A few cannot: the pipeline bar's
+   segments are sized in proportion to how long each tool actually took, so a
+   2 second stage against a 223 second scan is genuinely 1% of the width, and
+   widening it to 44px would be inventing a timing on a chart whose whole
+   purpose is to be truthful about where the time went.
+
+   So the drawn element keeps its real width and gains an invisible one
+   centred on it. `::after` is used rather than padding because padding would
+   change the layout; this overlays instead.
+
+   Only on touch devices. A mouse is precise enough not to need it, and on a
+   desktop the expanded areas of adjacent segments would overlap and steal
+   each other's hover.
+--------------------------------------------------------------------------- */
+@media (hover: none) and (pointer: coarse) {
+  .touch-target::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: 44px;
+    min-height: 44px;
+    width: 100%;
+    height: 100%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Hero screen height.
+
+   `100dvh` is correct on every modern browser, but iOS Safari before 15.4 does
+   not know `dvh` at all and would fall back to `auto`, collapsing the section
+   to the height of its text. `100vh` first, then `100dvh` where supported, so
+   older iOS gets a full screen that is merely a little too tall rather than a
+   broken layout.
+--------------------------------------------------------------------------- */
+[data-hero-screen] {
+  height: 100vh;
+}
+
+@supports (height: 100dvh) {
+  [data-hero-screen] {
+    height: 100dvh;
+  }
+}
+
+/*
+  A phone held sideways is only ~390px tall, and the section carries a 600px
+  minimum so the artwork is not crushed on a small window. Those two facts
+  together pushed the hero's only call to action below the fold: measured at
+  844x390, "See how it works" started at y=690 on a 390px screen.
+
+  In a short landscape viewport the minimum is dropped and the section is
+  allowed to be exactly as tall as the screen. The scene scales to cover and
+  is anchored to its bottom edge, so it crops from the top rather than
+  squashing, which is the same behaviour every other short viewport already
+  gets. `orientation: landscape` alone is not enough: a tablet in landscape is
+  1024px tall and wants the full 600px.
+*/
+@media (orientation: landscape) and (max-height: 560px) {
+  [data-hero-screen] {
+    min-height: 0;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   The lamp.
+
+   The scan's visual language: a check is a light. Two animations, both of
+   which must be removable, because this is decoration layered on top of
+   information that has to survive without it.
+
+   `lamp-throb` drives brightness and the halo, never size or position: a lamp
+   that changes size reads as a button being pressed rather than a light
+   pulsing. `lamp-ring` is the expanding pulse that makes the running lamp
+   findable in a row of fifteen; brightness alone was not enough there.
+--------------------------------------------------------------------------- */
+@keyframes lamp-throb {
+  0%,
+  100% {
+    opacity: 0.52;
+    box-shadow: 0 0 6px 1px rgb(103 232 176 / 22%);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 13px 3px rgb(103 232 176 / 55%);
+  }
+}
+
+.lamp-throb {
+  animation: lamp-throb 1.6s ease-in-out infinite;
+}
+
+@keyframes lamp-ring {
+  0% {
+    transform: scale(0.72);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+}
+
+.lamp-ring {
+  animation: lamp-ring 1.6s ease-out infinite;
+}
+
+/*
+  Reduced motion: the lamp still has to say which state it is in, so it settles
+  at full brightness rather than disappearing. Stopping at the animation's low
+  point would make a running check look switched off, which is worse than no
+  animation at all.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .lamp-throb {
+    animation: none;
+    opacity: 1;
+    box-shadow: 0 0 10px 2px rgb(103 232 176 / 45%);
+  }
+
+  .lamp-ring {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   The time budget: one bar, split by where the scan's seconds went.
+
+   Replaces six separate meters in a table column. A single bar makes visible
+   what six could not: one step is more than two thirds of the entire wait.
+--------------------------------------------------------------------------- */
+@keyframes budget-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.budget-grow {
+  transform-origin: left center;
+  animation: budget-grow 750ms var(--ease-soft) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .budget-grow {
+    animation: none;
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * The scan page: segmented stage bar and stage list.
+ *
+ * The bar is the page's instrument, so it is built like hardware rather than a
+ * web widget: a recessed track, cells that light rather than fill, a scanline
+ * texture on every lit cell, and a travelling sweep over the unfinished
+ * remainder. Everything is CSS gradients and transforms, so it costs nothing
+ * and stays crisp at any width.
+ * ------------------------------------------------------------------------ */
+
+/*
+ * The recessed track.
+ *
+ * The inset shadow is what sells "cut into the panel" rather than "drawn on
+ * top of it": a dark rim at the top edge and a faint light rim at the bottom
+ * is the oldest trick for an engraved surface, and it survives at 3px.
+ */
+.stage-track {
+  background: #060b11;
+  border: 1px solid rgb(160 205 235 / 10%);
+  box-shadow:
+    inset 0 2px 4px rgb(0 0 0 / 55%),
+    inset 0 -1px 0 rgb(190 225 245 / 6%);
+}
+
+/* One cell per stage. Empty until the stage reports: a dark well. */
+.stage-cell {
+  position: relative;
+  flex: 1 1 0;
+  height: 20px;
+  overflow: hidden;
+  background: #0c141d;
+  box-shadow: inset 0 0 0 1px rgb(160 205 235 / 5%);
+}
+
+/*
+ * A settled stage. Solid phosphor, with three things layered on top that turn
+ * a green rectangle into a lit cell:
+ *
+ *   1. a bright top edge, as if the cell is emitting from its face
+ *   2. horizontal scanlines, the same language as the hero's CRT
+ *   3. an outer glow, so adjacent lit cells bleed into one another slightly
+ */
+.stage-cell-done {
+  background:
+    repeating-linear-gradient(180deg, rgb(3 7 11 / 16%) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, #8ff2c6 0 2px, var(--phos) 2px, #45b98c 100%);
+  box-shadow:
+    0 0 10px rgb(103 232 176 / 28%),
+    inset 0 0 0 1px rgb(3 7 11 / 25%);
+  animation: cell-ignite var(--dur-base) var(--ease) both;
+}
+
+/*
+ * Ignition. A cell does not fade in, it strikes: over-bright for a frame, then
+ * settles. That is what makes a stage completing feel like a switch throwing
+ * rather than a value changing.
+ */
+@keyframes cell-ignite {
+  0% {
+    opacity: 0;
+    transform: scaleY(0.4);
+    filter: brightness(2.2);
+  }
+  55% {
+    opacity: 1;
+    transform: scaleY(1);
+    filter: brightness(1.6);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1);
+    filter: brightness(1);
+  }
+}
+
+/* The running stage. Amber, breathing, with a sweep travelling across it. */
+.stage-cell-live {
+  /*
+   * Bright enough to read as ACTIVE, not as a dead brown gap.
+   *
+   * The first version was a dark amber wash and, sitting between lit green
+   * cells and empty wells, it looked like a third kind of nothing. The cell
+   * now carries a real amber body with the same scanline texture the lit
+   * cells use, so the eye groups it with "working" rather than "empty".
+   */
+  background:
+    repeating-linear-gradient(180deg, rgb(3 7 11 / 18%) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, #ffd8a0 0 2px, var(--amber) 2px, #b87418 100%);
+  box-shadow:
+    0 0 12px rgb(255 180 84 / 40%),
+    inset 0 0 0 1px rgb(3 7 11 / 25%);
+  animation: cell-breathe 1.8s ease-in-out infinite;
+}
+
+.stage-cell-live::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  width: 60%;
+  /*
+   * A dark bar travelling over the lit cell, not another amber glow: the cell
+   * is already amber, so the readable motion is a shadow crossing it, the way
+   * a scan line crosses a CRT.
+   */
+  background: linear-gradient(90deg, transparent, rgb(3 7 11 / 55%), transparent);
+  animation: cell-sweep 1.4s var(--ease) infinite;
+}
+
+@keyframes cell-breathe {
+  50% {
+    box-shadow:
+      0 0 20px rgb(255 180 84 / 70%),
+      inset 0 0 0 1px rgb(3 7 11 / 25%);
+  }
+}
+
+@keyframes cell-sweep {
+  from {
+    left: -60%;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+/*
+ * A stage that could not run. Hatched and dim, and it keeps its slot: dropping
+ * it would make the total silently shrink halfway through a scan.
+ */
+.stage-cell-skipped {
+  background:
+    repeating-linear-gradient(45deg, rgb(147 170 185 / 22%) 0 2px, transparent 2px 6px),
+    #131c26;
+  box-shadow: inset 0 0 0 1px rgb(160 205 235 / 7%);
+}
+
+/* --------------------------------- list --------------------------------- */
+
+/* The running row gets a warm wash that fades to nothing across the row. */
+.stage-row-live {
+  background: linear-gradient(90deg, rgb(255 180 84 / 7%), transparent 65%);
+}
+
+/* The live marker pulses so the eye finds it in a list of fifteen. */
+.stage-chip-live {
+  animation: chip-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes chip-pulse {
+  50% {
+    box-shadow: 0 0 12px rgb(255 180 84 / 55%);
+  }
+}
+
+.stage-chip-skipped {
+  background:
+    repeating-linear-gradient(45deg, rgb(147 170 185 / 26%) 0 2px, transparent 2px 6px),
+    #141d27;
+}
+
+/*
+ * An ellipsis that types itself, rather than three static dots. Rendered with
+ * a pseudo-element so the text it follows is never re-laid out.
+ */
+.stage-ellipsis::after {
+  content: '';
+  animation: ellipsis 1.4s steps(4, end) infinite;
+}
+
+@keyframes ellipsis {
+  0% {
+    content: '';
+  }
+  25% {
+    content: '.';
+  }
+  50% {
+    content: '..';
+  }
+  75% {
+    content: '...';
+  }
+}
+
+/*
+ * Reduced motion.
+ *
+ * The cells still light, they simply do not strike, breathe or sweep. The
+ * sweep in particular must stop: it is an infinite loop in the middle of the
+ * page. Lit state is preserved so no information is lost.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .stage-cell-done,
+  .stage-cell-live,
+  .stage-chip-live {
+    animation: none;
+  }
+
+  .stage-cell-live::after {
+    animation: none;
+    left: 0;
+    width: 100%;
+    opacity: 0.5;
+  }
+
+  .stage-ellipsis::after {
+    animation: none;
+    content: '...';
+  }
+}
